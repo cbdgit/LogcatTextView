@@ -4,6 +4,8 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.Html;
 import android.util.AttributeSet;
 import android.widget.ScrollView;
@@ -20,6 +22,8 @@ public class LogcatTextView extends ScrollView implements LogcatListener {
 
     private int verboseColor, debugColor, errorColor, infoColor, warningColor, consoleColor;
     private TextView textView;
+
+    public TextView getTextView() { return textView; }
 
     public LogcatTextView( Context context ) {
         super( context );
@@ -111,7 +115,7 @@ public class LogcatTextView extends ScrollView implements LogcatListener {
                     BufferedReader bufferedReader = new BufferedReader( new InputStreamReader( process
                             .getInputStream() ) );
 
-                    StringBuilder log = new StringBuilder();
+                    final StringBuilder log = new StringBuilder();
                     String line;
                     while ( ( line = bufferedReader.readLine() ) != null ) {
                         if ( line.contains( processId ) ) {
@@ -132,7 +136,14 @@ public class LogcatTextView extends ScrollView implements LogcatListener {
                                     .substring( 2 ) + "\">" + line + "</font><br><br>" );
                         }
                     }
-                    listener.onLogcatCaptured( log.toString() );
+
+                    new Handler(Looper.getMainLooper()).post(new Runnable() {
+                        @Override
+                        public void run() {
+                            listener.onLogcatCaptured(log.toString());
+                        }
+                    });
+
                 } catch ( Exception e ) {
                     e.printStackTrace();
                 }
